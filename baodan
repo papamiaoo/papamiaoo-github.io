@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三角洲报单系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            background-color: #1a365d;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .menu-toggle {
+            font-size: 24px;
+            margin-right: 20px;
+            cursor: pointer;
+            z-index: 101;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background-color: #2c3e50;
+            padding-top: 60px;
+            z-index: 99;
+            transform: translateX(-100%);
+            transition: transform 0.3s;
+            overflow-y: auto;
+        }
+        
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .menu-item {
+            position: relative;
+            background-color: #2c3e50;
+        }
+        
+        .menu-title {
+            padding: 15px 20px;
+            color: #ecf0f1;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .menu-title:hover, .menu-title.active {
+            background-color: #34495e;
+        }
+        
+        .menu-title .arrow {
+            transition: transform 0.3s;
+        }
+        
+        .menu-title.active .arrow {
+            transform: rotate(90deg);
+        }
+        
+        .submenu {
+            list-style: none;
+            background-color: #34495e;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0;
+        }
+        
+        .submenu.active {
+            max-height: 500px;
+        }
+        
+        .submenu li {
+            padding: 12px 20px 12px 40px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s;
+        }
+        
+        .submenu li a {
+            color: #ecf0f1;
+            text-decoration: none;
+            display: block;
+            font-size: 14px;
+        }
+        
+        .submenu li:hover {
+            background-color: #3d566e;
+            transform: translateX(5px);
+        }
+        
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            transition: margin-left 0.3s;
+        }
+        
+        .main-content.active {
+            margin-left: 300px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1a365d;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1a365d;
+        }
+        
+        .input-unit {
+            position: relative;
+        }
+        
+        .unit {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+        
+        .btn {
+            padding: 15px;
+            background-color: #1a365d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background-color: #2c5282;
+        }
+        
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1a365d;
+            color: #1a365d;
+        }
+        
+        .ammo-group, .durability-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .ammo-item, .durability-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ammo-item label, .durability-item label {
+            font-weight: normal;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 98;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .home-content {
+            text-align: center;
+            padding: 40px 0;
+        }
+        
+        .home-content h2 {
+            margin-bottom: 30px;
+            color: #1a365d;
+        }
+        
+        /* 库存账号卡片样式 - 调整后的新样式 */
+        .account-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .account-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #ddd;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-date {
+            font-size: 14px;
+            color: #666;
+            margin-right: 10px;
+        }
+        
+        .card-id {
+            font-weight: bold;
+            color: #1a365d;
+        }
+        
+        .card-status {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-inventory {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-rented {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-completed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .card-content {
+            display: flex;
+            flex: 1;
+        }
+        
+        .card-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .card-right {
+            width: 140px;
+            margin-left: 15px;
+            display: flex;
+            flex-direction: column;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .card-detail {
+            margin: 5px 0;
+        }
+        
+        .card-detail strong {
+            color: #333;
+        }
+        
+        .card-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: none;
+            background-color: rgba(255,255,255,0.9);
+            padding: 8px;
+            justify-content: space-around;
+        }
+        
+        .account-card:hover .card-actions {
+            display: flex;
+        }
+        
+        .status-btn {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .status-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .btn-inventory {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .btn-rented {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .btn-completed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .edit-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #1a365d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            left: 70px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 3px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .account-card:hover .edit-btn,
+        .account-card:hover .delete-btn {
+            opacity: 1;
+        }
+        
+        /* 出租系统卡片样式 - 修改后的新样式 */
+        .rental-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .rental-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            display: flex;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        
+        .rental-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .rental-left {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .rental-right {
+            width: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            margin-left: 15px;
+            padding-top: 10px;
+            border-left: 1px solid #eee;
+            padding-left: 15px;
+        }
+        
+        .days-not-rented {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .rental-status {
+            position: absolute;
+            top: 10px;
+            right: 80px;
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .wechat-link {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        /* 搜索栏样式调整 */
+        .search-container {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .back-btn {
+            padding: 10px 15px;
+            background-color: #1a365d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        
+        .search-group {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            min-width: 300px;
+        }
+        
+        .search-input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .status-filter {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background-color: white;
+            min-width: 120px;
+        }
+        
+        .search-btn {
+            padding: 10px 20px;
+            background-color: #1a365d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        /* 排序按钮样式 */
+        .sort-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 15px;
+            gap: 10px;
+        }
+        
+        .sort-btn {
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .sort-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sort-btn.active {
+            background-color: #1a365d;
+            color: white;
+            border-color: #1a365d;
+        }
+        
+        /* 大按钮样式 */
+        .big-action-btn {
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        
+        .big-action-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-complete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-rent {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        /* 历史订单卡片样式 */
+        .history-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .history-status {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .history-content {
+            display: flex;
+        }
+        
+        .history-left {
+            flex: 1;
+        }
+        
+        .history-right {
+            width: 140px;
+            margin-left: 15px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #eee;
+            padding-left: 15px;
+        }
+        
+        /* 编辑模态框样式 */
+        .edit-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .edit-modal.active {
+            display: flex;
+        }
+        
+        .edit-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .edit-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* 出租确认对话框样式 */
+        .rent-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .rent-modal.active {
+            display: flex;
+        }
+        
+        .rent-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .rent-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* 确认对话框样式 */
+        .confirm-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .confirm-dialog.active {
+            display: flex;
+        }
+        
+        .confirm-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        
+        .confirm-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .confirm-yes {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .confirm-no {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        /* 新增的订单卡片样式 - 按照您的要求 */
+        .order-card-new {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            position: relative;
+        }
+
+        .order-header-new {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .remark-section-new {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .remark-btn-new {
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .remark-btn-new:hover {
+            background-color: #40a9ff;
+        }
+
+        .card-content-new {
+            display: flex;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .left-section-new {
+            flex: 3;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+
+        .right-section-new {
+            flex: 1;
+            padding: 10px;
+            border-left: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            background-color: #f5f5f5;
+        }
+
+        .info-row-new {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .info-item-new {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .info-label-new {
+            color: #666;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        .divider-new {
+            height: 1px;
+            background-color: #eee;
+            margin: 10px 0;
+        }
+
+        .status-bar-new {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .status-new {
+            color: #fa8c16;
+            font-weight: bold;
+        }
+
+        .time-new {
+            color: #666;
+        }
+
+        .list-title-new {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .sort-options-new {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .sort-btn-new {
+            padding: 4px 8px;
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 4px;
+            color: #1890ff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sort-btn-new:hover {
+            background-color: #1890ff;
+            color: white;
+        }
+
+        .boss-wechat-new {
+            font-weight: bold;
+            color: #1890ff;
+            word-break: break-all;
+        }
+
+        /* 库存和出租订单分类 */
+        .section-title-category {
+            font-size: 18px;
+            margin: 25px 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1a365d;
+            color: #1a365d;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-title-category::before {
+            content: "";
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background-color: #1a365d;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+
+        /* 新增的利润报表样式 */
+        .report-summary {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item h3 {
+            margin-bottom: 10px;
+            color: #1a365d;
+        }
+
+        .summary-item p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .profit-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        /* 结单对话框样式 */
+        .complete-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1002;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .complete-dialog.active {
+            display: flex;
+        }
+
+        .complete-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .complete-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .edit-history-btn {
+            background-color: #1a365d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .edit-history-btn:hover {
+            background-color: #2c5282;
+        }
+
+        /* 报表密码保护 */
+        .report-protected {
+            text-align: center;
+            padding: 40px;
+            display: none;
+        }
+
+        .report-protected.active {
+            display: block;
+        }
+
+        .report-content {
+            display: none;
+        }
+
+        .report-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <div class="menu-toggle">☰</div>
+        <h1>三角洲报单系统</h1>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <ul class="sidebar-menu">
+            <!-- 主菜单：三角洲租号 -->
+            <li class="menu-item">
+                <div class="menu-title active">
+                    <span>三角洲租号</span>
+                    <span class="arrow">›</span>
+                </div>
+                <ul class="submenu active">
+                    <li><a href="#" class="nav-link" data-page="report">报单系统</a></li>
+                    <li><a href="#" class="nav-link" data-page="inventory">库存账号</a></li>
+                    <li><a href="#" class="nav-link" data-page="rental">出租系统</a></li>
+                    <li><a href="#" class="nav-link" data-page="history">历史订单</a></li>
+                </ul>
+            </li>
+            
+            <!-- 主菜单：三角洲跑刀 -->
+            <li class="menu-item">
+                <div class="menu-title">
+                    <span>三角洲跑刀</span>
+                    <span class="arrow">›</span>
+                </div>
+                <ul class="submenu">
+                    <li><a href="#" class="nav-link" data-page="run1">未配置1</a></li>
+                    <li><a href="#" class="nav-link" data-page="run2">未配置2</a></li>
+                    <li><a href="#" class="nav-link" data-page="run3">未配置3</a></li>
+                    <li><a href="#" class="nav-link" data-page="run4">未配置4</a></li>
+                </ul>
+            </li>
+
+            <!-- 新增的利润报表菜单 -->
+            <li class="menu-item">
+                <div class="menu-title">
+                    <span>利润报表</span>
+                    <span class="arrow">›</span>
+                </div>
+                <ul class="submenu">
+                    <li><a href="#" class="nav-link" data-page="reportProfit">查看报表</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- 覆盖层 -->
+    <div class="overlay"></div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 首页内容 -->
+        <div id="homePage" class="container home-content">
+            <h2>欢迎使用三角洲报单系统</h2>
+            <p>请点击左上角菜单按钮选择功能</p>
+        </div>
+        
+        <!-- 报单表单 -->
+        <div id="reportFormPage" class="container" style="display: none;">
+            <h1>三角洲行动账号报单系统</h1>
+            <a href="#" id="goBack" class="btn">← 返回首页</a>
+            
+            <form id="reportForm">
+                <!-- 基础信息部分 -->
+                <div class="section-title">基础信息（强制填写）</div>
+                
+                <!-- ① 纯币 -->
+                <div class="form-group">
+                    <label for="pureCoins">① 纯币数量</label>
+                    <div class="input-unit">
+                        <input type="number" id="pureCoins" placeholder="请输入纯币数量" min="0" required>
+                        <span class="unit">W</span>
+                    </div>
+                    <div class="error" id="pureCoinsError">请输入有效的纯币数量（数字）</div>
+                </div>
+                
+                <!-- ② 体力等级 -->
+                <div class="form-group">
+                    <label for="staminaLevel">② 体力等级</label>
+                    <input type="number" id="staminaLevel" placeholder="请输入1-7之间的数字" min="1" max="7" required>
+                    <div class="error" id="staminaLevelError">请输入1-7之间的数字</div>
+                </div>
+                
+                <!-- ③ 保险格子 -->
+                <div class="form-group">
+                    <label for="insuranceSlots">③ 保险格子</label>
+                    <select id="insuranceSlots" required>
+                        <option value="">请选择保险格子数量</option>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="6">6</option>
+                        <option value="9">9</option>
+                    </select>
+                    <div class="error" id="insuranceSlotsError">请选择2、4、6或9</div>
+                </div>
+                
+                <!-- ④ 账号等级 -->
+                <div class="form-group">
+                    <label for="accountLevel">④ 账号等级</label>
+                    <input type="number" id="accountLevel" placeholder="请输入1-60之间的数字" min="1" max="60" required>
+                    <div class="error" id="accountLevelError">请输入1-60之间的数字</div>
+                </div>
+                
+                <!-- 增值服务部分 -->
+                <div class="section-title">增值服务（按市场价结算）</div>
+                
+                <!-- ⑤ 红蛋 -->
+                <div class="form-group">
+                    <label>⑤ 红蛋数量</label>
+                    <div class="ammo-group">
+                        <div class="ammo-item">
+                            <label for="awmAmmo">AWM子弹</label>
+                            <input type="number" id="awmAmmo" min="0">
+                        </div>
+                        <div class="ammo-item">
+                            <label for="ammo76251">7.62*51子弹</label>
+                            <input type="number" id="ammo76251" min="0">
+                        </div>
+                        <div class="ammo-item">
+                            <label for="ammo76254">7.62*54子弹</label>
+                            <input type="number" id="ammo76254" min="0">
+                        </div>
+                        <div class="ammo-item">
+                            <label for="ammo68">6.8子弹</label>
+                            <input type="number" id="ammo68" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ⑥ 满耐久装备 -->
+                <div class="form-group">
+                    <label>⑥ 满耐久装备</label>
+                    <div class="durability-group">
+                        <div class="durability-item">
+                            <label for="fullDurabilityHelmet">满耐久6头</label>
+                            <input type="number" id="fullDurabilityHelmet" min="0">
+                        </div>
+                        <div class="durability-item">
+                            <label for="fullDurabilityArmor">满耐久6甲</label>
+                            <input type="number" id="fullDurabilityArmor" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ⑦ 能否接受帐密 -->
+                <div class="form-group">
+                    <label for="acceptAccountInfo">⑦ 能否接受帐密（不会登录QQ）</label>
+                    <select id="acceptAccountInfo" required>
+                        <option value="">请选择</option>
+                        <option value="是">是</option>
+                        <option value="否">否</option>
+                    </select>
+                    <div class="error" id="acceptAccountInfoError">请选择是或否</div>
+                </div>
+                
+                <!-- ⑧ 有无付费刀皮 -->
+                <div class="form-group">
+                    <label for="hasPaidKnifeSkin">⑧ 有无付费刀皮</label>
+                    <select id="hasPaidKnifeSkin" required>
+                        <option value="">请选择</option>
+                        <option value="有">有</option>
+                        <option value="无">无</option>
+                    </select>
+                    <div class="error" id="hasPaidKnifeSkinError">请选择有或无</div>
+                </div>
+                
+                <!-- ⑨ 仓库不能动的东西 -->
+                <div class="form-group">
+                    <label for="untouchableItems">⑨ 仓库不能动的东西</label>
+                    <input type="text" id="untouchableItems" placeholder="请输入仓库中不能动的物品（选填）">
+                    <p style="font-size: 14px; color: #666; margin-top: 5px;">打手默认不能动仓库，若用刘涛红蛋要和号主协商价格</p>
+                </div>
+                
+                <!-- ⑩ 号主备注 -->
+                <div class="form-group">
+                    <label for="ownerNotes">⑩ 号主备注</label>
+                    <textarea id="ownerNotes" rows="3" placeholder="请输入号主的备注信息（选填）"></textarea>
+                </div>
+                
+                <!-- ⑪ 微信号 -->
+                <div class="form-group">
+                    <label for="wechatId">⑪ 微信号</label>
+                    <input type="text" id="wechatId" placeholder="请输入微信号（必填）" required>
+                    <div class="error" id="wechatIdError">请输入微信号</div>
+                </div>
+                
+                <button type="submit" class="btn">提交报单</button>
+            </form>
+        </div>
+        
+        <!-- 库存账号页面 -->
+        <div id="inventoryPage" class="container" style="display: none;">
+            <h1>库存账号</h1>
+            
+            <div class="search-container">
+                <a href="#" class="back-btn">← 返回首页</a>
+                <div class="search-group">
+                    <input type="text" id="searchInput" class="search-input" placeholder="搜索账号...">
+                    <button id="searchBtn" class="search-btn">搜索</button>
+                </div>
+            </div>
+            
+            <div class="account-cards" id="accountCards">
+                <!-- 账号卡片将在这里动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 出租系统页面 -->
+        <div id="rentalPage" class="container" style="display: none;">
+            <h1>出租系统</h1>
+            
+            <div class="search-container">
+                <a href="#" class="back-btn">← 返回首页</a>
+                <div class="search-group">
+                    <input type="text" id="searchRentalInput" class="search-input" placeholder="搜索出租订单...">
+                    <select id="rentalStatusFilter" class="status-filter">
+                        <option value="all">所有</option>
+                        <option value="inventory">库存</option>
+                        <option value="rented">出租中</option>
+                    </select>
+                    <button id="rentalSearchBtn" class="search-btn">搜索</button>
+                </div>
+            </div>
+            
+            <div class="sort-container">
+                <button class="sort-btn" data-sort="default">默认排序</button>
+                <button class="sort-btn" data-sort="days-asc">未租天数↑</button>
+                <button class="sort-btn" data-sort="days-desc">未租天数↓</button>
+            </div>
+            
+            <!-- 库存账号部分 -->
+            <div class="section-title-category">库存账号</div>
+            <div class="rental-cards" id="inventoryCards">
+                <!-- 库存账号卡片将在这里动态生成 -->
+            </div>
+            
+            <!-- 出租中订单部分 -->
+            <div class="section-title-category">出租中订单</div>
+            <div class="rental-cards" id="rentedCards">
+                <!-- 出租中订单卡片将在这里动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 历史订单页面 -->
+        <div id="historyPage" class="container" style="display: none;">
+            <h1>历史订单</h1>
+            
+            <div class="search-container">
+                <a href="#" class="back-btn">← 返回首页</a>
+                <div class="search-group">
+                    <input type="text" id="searchHistoryInput" class="search-input" placeholder="搜索历史订单...">
+                    <button id="historySearchBtn" class="search-btn">搜索</button>
+                </div>
+            </div>
+            
+            <div class="history-cards" id="historyCards">
+                <!-- 历史订单卡片将在这里动态生成 -->
+            </div>
+        </div>
+
+        <!-- 利润报表页面 -->
+        <div id="reportProfitPage" class="container" style="display: none;">
+            <h1>利润报表</h1>
+            
+            <div class="search-container">
+                <a href="#" class="back-btn">← 返回首页</a>
+                <div class="search-group">
+                    <input type="text" id="searchReportInput" class="search-input" placeholder="搜索报表...">
+                    <input type="password" id="reportPassword" class="search-input" placeholder="请输入密码">
+                    <button id="reportSearchBtn" class="search-btn">查看报表</button>
+                </div>
+            </div>
+            
+            <div class="report-protected" id="reportProtected">
+                <h2>请输入密码查看利润报表</h2>
+            </div>
+            
+            <div class="report-content" id="reportContent">
+                <div class="report-summary">
+                    <div class="summary-item">
+                        <h3>总利润</h3>
+                        <p id="totalProfitSum">0</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>总订单数</h3>
+                        <p id="totalOrders">0</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>平均利润</h3>
+                        <p id="averageProfit">0</p>
+                    </div>
+                </div>
+                
+                <div class="section-title-category">利润明细</div>
+                <div class="history-cards" id="profitCards">
+                    <!-- 利润明细卡片将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div class="edit-modal" id="editModal">
+        <div class="edit-content">
+            <span class="edit-close" id="editClose">&times;</span>
+            <h2>编辑账号信息</h2>
+            <form id="editForm">
+                <!-- 基础信息部分 -->
+                <div class="section-title">基础信息</div>
+                
+                <!-- ① 纯币 -->
+                <div class="form-group">
+                    <label for="editPureCoins">① 纯币数量</label>
+                    <div class="input-unit">
+                        <input type="number" id="editPureCoins" class="edit-input" min="0" required>
+                        <span class="unit">W</span>
+                    </div>
+                </div>
+                
+                <!-- ② 体力等级 -->
+                <div class="form-group">
+                    <label for="editStaminaLevel">② 体力等级</label>
+                    <input type="number" id="editStaminaLevel" class="edit-input" min="1" max="7" required>
+                </div>
+                
+                <!-- ③ 保险格子 -->
+                <div class="form-group">
+                    <label for="editInsuranceSlots">③ 保险格子</label>
+                    <select id="editInsuranceSlots" class="edit-input" required>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="6">6</option>
+                        <option value="9">9</option>
+                    </select>
+                </div>
+                
+                <!-- ④ 账号等级 -->
+                <div class="form-group">
+                    <label for="editAccountLevel">④ 账号等级</label>
+                    <input type="number" id="editAccountLevel" class="edit-input" min="1" max="60" required>
+                </div>
+                
+                <!-- 增值服务部分 -->
+                <div class="section-title">增值服务</div>
+                
+                <!-- ⑤ 红蛋 -->
+                <div class="form-group">
+                    <label>⑤ 红蛋数量</label>
+                    <div class="ammo-group">
+                        <div class="ammo-item">
+                            <label for="editAwmAmmo">AWM子弹</label>
+                            <input type="number" id="editAwmAmmo" class="edit-input" min="0">
+                        </div>
+                        <div class="ammo-item">
+                            <label for="editAmmo76251">7.62*51子弹</label>
+                            <input type="number" id="editAmmo76251" class="edit-input" min="0">
+                        </div>
+                        <div class="ammo-item">
+                            <label for="editAmmo76254">7.62*54子弹</label>
+                            <input type="number" id="editAmmo76254" class="edit-input" min="0">
+                        </div>
+                        <div class="ammo-item">
+                            <label for="editAmmo68">6.8子弹</label>
+                            <input type="number" id="editAmmo68" class="edit-input" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ⑥ 满耐久装备 -->
+                <div class="form-group">
+                    <label>⑥ 满耐久装备</label>
+                    <div class="durability-group">
+                        <div class="durability-item">
+                            <label for="editFullDurabilityHelmet">满耐久6头</label>
+                            <input type="number" id="editFullDurabilityHelmet" class="edit-input" min="0">
+                        </div>
+                        <div class="durability-item">
+                            <label for="editFullDurabilityArmor">满耐久6甲</label>
+                            <input type="number" id="editFullDurabilityArmor" class="edit-input" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ⑦ 能否接受帐密 -->
+                <div class="form-group">
+                    <label for="editAcceptAccountInfo">⑦ 能否接受帐密</label>
+                    <select id="editAcceptAccountInfo" class="edit-input" required>
+                        <option value="是">是</option>
+                        <option value="否">否</option>
+                    </select>
+                </div>
+                
+                <!-- ⑧ 有无付费刀皮 -->
+                <div class="form-group">
+                    <label for="editHasPaidKnifeSkin">⑧ 有无付费刀皮</label>
+                    <select id="editHasPaidKnifeSkin" class="edit-input" required>
+                        <option value="有">有</option>
+                        <option value="无">无</option>
+                    </select>
+                </div>
+                
+                <!-- ⑨ 仓库不能动的东西 -->
+                <div class="form-group">
+                    <label for="editUntouchableItems">⑨ 仓库不能动的东西</label>
+                    <input type="text" id="editUntouchableItems" class="edit-input">
+                </div>
+                
+                <!-- ⑩ 号主备注 -->
+                <div class="form-group">
+                    <label for="editOwnerNotes">⑩ 号主备注</label>
+                    <textarea id="editOwnerNotes" class="edit-input" rows="3"></textarea>
+                </div>
+                
+                <!-- ⑪ 微信号 -->
+                <div class="form-group">
+                    <label for="editWechatId">⑪ 微信号</label>
+                    <input type="text" id="editWechatId" class="edit-input" required>
+                </div>
+                
+                <!-- 新增的利润相关字段 -->
+                <div class="section-title">利润信息</div>
+                <div class="form-group">
+                    <label for="editBaseCost">基础成本</label>
+                    <input type="number" id="editBaseCost" class="edit-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="editBasePrice">基础售价</label>
+                    <input type="number" id="editBasePrice" class="edit-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="editExtraCost">增值服务成本</label>
+                    <input type="number" id="editExtraCost" class="edit-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="editExtraPrice">增值服务售价</label>
+                    <input type="number" id="editExtraPrice" class="edit-input" min="0">
+                </div>
+                <div class="form-group">
+                    <label>总利润: <span id="editTotalProfit">0</span></label>
+                </div>
+                
+                <button type="submit" class="btn">保存修改</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 出租确认模态框 -->
+    <div class="rent-modal" id="rentModal">
+        <div class="rent-content">
+            <span class="rent-close" id="rentClose">&times;</span>
+            <h2>出租账号</h2>
+            <form id="rentForm">
+                <div class="form-group">
+                    <label for="bossWechatId">老板微信号</label>
+                    <input type="text" id="bossWechatId" placeholder="请输入老板微信号" required>
+                </div>
+                <div class="form-group">
+                    <label for="baseCost">基础成本</label>
+                    <input type="number" id="baseCost" placeholder="请输入基础成本" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="basePrice">基础售价</label>
+                    <input type="number" id="basePrice" placeholder="请输入基础售价" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>预计利润: <span id="estimatedProfit">0</span></label>
+                </div>
+                <button type="submit" class="btn">确认出租</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认对话框 -->
+    <div class="confirm-dialog" id="confirmDialog">
+        <div class="confirm-content">
+            <h3>确认删除</h3>
+            <p>您确定要删除这个账号吗？此操作无法撤销！</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-yes" id="confirmYes">确定</button>
+                <button class="confirm-btn confirm-no" id="confirmNo">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结单对话框 -->
+    <div class="complete-dialog" id="completeDialog">
+        <div class="complete-content">
+            <h3>结单确认</h3>
+            <div class="form-group">
+                <label for="extraCost">增值服务成本</label>
+                <input type="number" id="extraCost" placeholder="请输入增值服务成本" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label for="extraPrice">增值服务售价</label>
+                <input type="number" id="extraPrice" placeholder="请输入增值服务售价" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>总利润: <span id="totalProfit">0</span></label>
+            </div>
+            <p>确定要结单吗？</p>
+            <div class="confirm-buttons">
+                <button class="confirm-btn confirm-yes" id="completeYes">确定</button>
+                <button class="confirm-btn confirm-no" id="completeNo">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 存储账号数据的数组
+        let accounts = [];
+        let dailyCounter = 1; // 每日计数器
+        let accountToDelete = null; // 待删除的账号ID
+        let accountToRent = null; // 待出租的账号ID
+        let currentSort = 'default'; // 当前排序方式
+        let lastOrderNumber = 0; // 订单编号计数器
+        
+        // 页面加载时确保"三角洲租号"菜单是展开的
+        document.addEventListener('DOMContentLoaded', function() {
+            const rentMenu = document.querySelector('.sidebar-menu .menu-item:first-child');
+            rentMenu.querySelector('.menu-title').classList.add('active');
+            rentMenu.querySelector('.submenu').classList.add('active');
+            
+            // 从本地存储加载已有账号数据
+            const savedAccounts = localStorage.getItem('deltaAccounts');
+            if (savedAccounts) {
+                accounts = JSON.parse(savedAccounts);
+                // 初始化每日计数器
+                const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
+                dailyCounter = accounts.filter(acc => 
+                    acc.createdAt && acc.createdAt.startsWith(today)
+                ).length + 1;
+                
+                // 初始化订单编号
+                accounts.forEach(account => {
+                    if (account.orderNumber) {
+                        const num = parseInt(account.orderNumber.replace('NO.', ''));
+                        if (num > lastOrderNumber) {
+                            lastOrderNumber = num;
+                        }
+                    }
+                });
+                
+                renderAccountCards();
+                renderRentalCards();
+                renderHistoryCards();
+            }
+            
+            // 搜索功能
+            document.getElementById('searchBtn').addEventListener('click', function() {
+                renderAccountCards();
+            });
+            
+            document.getElementById('rentalSearchBtn').addEventListener('click', function() {
+                renderRentalCards();
+            });
+            
+            document.getElementById('historySearchBtn').addEventListener('click', function() {
+                renderHistoryCards();
+            });
+            
+            // 报表密码验证
+            document.getElementById('reportSearchBtn').addEventListener('click', function() {
+                const password = document.getElementById('reportPassword').value;
+                if (password === 'papamiao1') {
+                    document.getElementById('reportProtected').classList.remove('active');
+                    document.getElementById('reportContent').classList.add('active');
+                    renderProfitReport();
+                } else {
+                    alert('密码错误！');
+                }
+            });
+            
+            // 排序按钮点击事件
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentSort = this.dataset.sort;
+                    renderRentalCards();
+                });
+            });
+            
+            // 默认选中默认排序
+            document.querySelector('.sort-btn[data-sort="default"]').classList.add('active');
+            
+            // 回车键搜索
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    renderAccountCards();
+                }
+            });
+            
+            document.getElementById('searchRentalInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    renderRentalCards();
+                }
+            });
+            
+            document.getElementById('searchHistoryInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    renderHistoryCards();
+                }
+            });
+            
+            // 利润计算
+            document.getElementById('baseCost').addEventListener('input', calculateEstimatedProfit);
+            document.getElementById('basePrice').addEventListener('input', calculateEstimatedProfit);
+            document.getElementById('extraCost').addEventListener('input', calculateTotalProfit);
+            document.getElementById('extraPrice').addEventListener('input', calculateTotalProfit);
+        });
+
+        // 生成订单号
+        function generateOrderNumber() {
+            lastOrderNumber++;
+            return 'NO.' + lastOrderNumber.toString().padStart(6, '0');
+        }
+
+        // 计算预计利润
+        function calculateEstimatedProfit() {
+            const baseCost = parseFloat(document.getElementById('baseCost').value) || 0;
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const profit = basePrice - baseCost;
+            document.getElementById('estimatedProfit').textContent = profit;
+        }
+
+        // 计算总利润
+        function calculateTotalProfit() {
+            const baseCost = parseFloat(document.getElementById('baseCost').value) || 0;
+            const basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            const extraCost = parseFloat(document.getElementById('extraCost').value) || 0;
+            const extraPrice = parseFloat(document.getElementById('extraPrice').value) || 0;
+            const totalProfit = (basePrice + extraPrice) - (baseCost + extraCost);
+            document.getElementById('totalProfit').textContent = totalProfit;
+        }
+
+        // 菜单切换功能
+        document.querySelector('.menu-toggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.overlay').classList.toggle('active');
+            document.querySelector('.main-content').classList.toggle('active');
+        });
+        
+        // 覆盖层点击关闭菜单
+        document.querySelector('.overlay').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.remove('active');
+            this.classList.remove('active');
+            document.querySelector('.main-content').classList.remove('active');
+        });
+        
+        // 主菜单点击展开/收起子菜单
+        document.querySelectorAll('.menu-title').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.toggle('active');
+                const submenu = this.nextElementSibling;
+                submenu.classList.toggle('active');
+            });
+        });
+        
+        // 导航链接点击处理
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageId = this.getAttribute('data-page');
+                
+                // 关闭菜单
+                document.querySelector('.sidebar').classList.remove('active');
+                document.querySelector('.overlay').classList.remove('active');
+                document.querySelector('.main-content').classList.remove('active');
+                
+                // 隐藏所有页面
+                document.querySelectorAll('.container').forEach(page => {
+                    page.style.display = 'none';
+                });
+                
+                // 显示对应页面或提示
+                if (pageId === 'report') {
+                    document.getElementById('reportFormPage').style.display = 'block';
+                } else if (pageId === 'inventory') {
+                    document.getElementById('inventoryPage').style.display = 'block';
+                    renderAccountCards();
+                } else if (pageId === 'rental') {
+                    document.getElementById('rentalPage').style.display = 'block';
+                    renderRentalCards();
+                } else if (pageId === 'history') {
+                    document.getElementById('historyPage').style.display = 'block';
+                    renderHistoryCards();
+                } else if (pageId === 'reportProfit') {
+                    document.getElementById('reportProfitPage').style.display = 'block';
+                    document.getElementById('reportProtected').classList.add('active');
+                    document.getElementById('reportContent').classList.remove('active');
+                } else {
+                    alert('该功能还未配置');
+                    document.getElementById('homePage').style.display = 'block';
+                }
+            });
+        });
+        
+        // 返回按钮处理
+        document.querySelectorAll('.back-btn, #goBack').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                // 隐藏所有页面
+                document.querySelectorAll('.container').forEach(page => {
+                    page.style.display = 'none';
+                });
+                // 显示首页
+                document.getElementById('homePage').style.display = 'block';
+            });
+        });
+        
+        // 表单验证和提交
+        document.getElementById('reportForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 重置错误提示
+            document.querySelectorAll('.error').forEach(el => el.style.display = 'none');
+            
+            let isValid = true;
+            
+            // ① 验证纯币
+            const pureCoins = document.getElementById('pureCoins');
+            if (!pureCoins.value || isNaN(pureCoins.value) || Number(pureCoins.value) < 0) {
+                document.getElementById('pureCoinsError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // ② 验证体力等级
+            const staminaLevel = document.getElementById('staminaLevel');
+            if (!staminaLevel.value || isNaN(staminaLevel.value)) {
+                document.getElementById('staminaLevelError').style.display = 'block';
+                isValid = false;
+            } else {
+                const level = Number(staminaLevel.value);
+                if (level < 1 || level > 7) {
+                    document.getElementById('staminaLevelError').style.display = 'block';
+                    isValid = false;
+                }
+            }
+            
+            // ③ 验证保险格子
+            const insuranceSlots = document.getElementById('insuranceSlots');
+            if (!insuranceSlots.value || ![2,4,6,9].includes(Number(insuranceSlots.value))) {
+                document.getElementById('insuranceSlotsError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // ④ 验证账号等级
+            const accountLevel = document.getElementById('accountLevel');
+            if (!accountLevel.value || isNaN(accountLevel.value)) {
+                document.getElementById('accountLevelError').style.display = 'block';
+                isValid = false;
+            } else {
+                const level = Number(accountLevel.value);
+                if (level < 1 || level > 60) {
+                    document.getElementById('accountLevelError').style.display = 'block';
+                    isValid = false;
+                }
+            }
+            
+            // ⑦ 验证能否接受帐密
+            const acceptAccountInfo = document.getElementById('acceptAccountInfo');
+            if (!acceptAccountInfo.value || !['是','否'].includes(acceptAccountInfo.value)) {
+                document.getElementById('acceptAccountInfoError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // ⑧ 验证有无付费刀皮
+            const hasPaidKnifeSkin = document.getElementById('hasPaidKnifeSkin');
+            if (!hasPaidKnifeSkin.value || !['有','无'].includes(hasPaidKnifeSkin.value)) {
+                document.getElementById('hasPaidKnifeSkinError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // ⑪ 验证微信号
+            const wechatId = document.getElementById('wechatId');
+            if (!wechatId.value || wechatId.value.trim() === '') {
+                document.getElementById('wechatIdError').style.display = 'block';
+                isValid = false;
+            }
+            
+            // 如果验证通过，可以提交表单
+            if (isValid) {
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0].replace(/-/g, '/');
+                const timeStr = today.toLocaleTimeString();
+                
+                const formData = {
+                    id: Date.now(), // 使用时间戳作为唯一ID
+                    orderNumber: generateOrderNumber(), // 生成订单号
+                    pureCoins: pureCoins.value,
+                    staminaLevel: staminaLevel.value,
+                    insuranceSlots: insuranceSlots.value,
+                    accountLevel: accountLevel.value,
+                    awmAmmo: document.getElementById('awmAmmo').value || 0,
+                    ammo76251: document.getElementById('ammo76251').value || 0,
+                    ammo76254: document.getElementById('ammo76254').value || 0,
+                    ammo68: document.getElementById('ammo68').value || 0,
+                    fullDurabilityHelmet: document.getElementById('fullDurabilityHelmet').value || 0,
+                    fullDurabilityArmor: document.getElementById('fullDurabilityArmor').value || 0,
+                    acceptAccountInfo: acceptAccountInfo.value,
+                    hasPaidKnifeSkin: hasPaidKnifeSkin.value,
+                    untouchableItems: document.getElementById('untouchableItems').value,
+                    ownerNotes: document.getElementById('ownerNotes').value,
+                    wechatId: wechatId.value,
+                    dateStr: dateStr, // 年月日格式
+                    dayNumber: dailyCounter.toString().padStart(2, '0'), // 当日序号
+                    timeStr: timeStr, // 具体时间
+                    status: 'inventory', // 默认状态为库存
+                    createdAt: new Date().toLocaleString(),
+                    lastRentedDate: null, // 最后出租日期
+                    bossWechatId: null, // 老板微信号
+                    baseCost: 0, // 基础成本
+                    basePrice: 0, // 基础售价
+                    extraCost: 0, // 增值服务成本
+                    extraPrice: 0 // 增值服务售价
+                };
+                
+                // 添加到账号数组
+                accounts.unshift(formData);
+                dailyCounter++;
+                
+                // 保存到本地存储
+                localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+                
+                // 渲染卡片
+                renderAccountCards();
+                renderRentalCards();
+                renderHistoryCards();
+                
+                console.log('表单数据:', formData);
+                alert('报单提交成功！已添加到库存账号');
+                
+                // 重置表单
+                this.reset();
+                
+                // 跳转到库存页面
+                document.querySelectorAll('.container').forEach(page => {
+                    page.style.display = 'none';
+                });
+                document.getElementById('inventoryPage').style.display = 'block';
+            }
+        });
+        
+        // 渲染账号卡片 - 只显示库存状态的账号
+        function renderAccountCards() {
+            const cardsContainer = document.getElementById('accountCards');
+            cardsContainer.innerHTML = '';
+            
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filteredAccounts = accounts.filter(account => 
+                account.status === 'inventory' &&
+                (searchTerm === '' || 
+                 (account.pureCoins && account.pureCoins.toString().toLowerCase().includes(searchTerm)) ||
+                 (account.wechatId && account.wechatId.toLowerCase().includes(searchTerm)) ||
+                 (account.dateStr && account.dateStr.toLowerCase().includes(searchTerm)) ||
+                 (account.dayNumber && account.dayNumber.toLowerCase().includes(searchTerm)) ||
+                 (account.orderNumber && account.orderNumber.toLowerCase().includes(searchTerm)))
+            );
+            
+            if (filteredAccounts.length === 0) {
+                cardsContainer.innerHTML = '<p style="text-align: center; width: 100%;">暂无库存账号</p>';
+                return;
+            }
+            
+            filteredAccounts.forEach((account, index) => {
+                const card = document.createElement('div');
+                card.className = 'account-card';
+                card.dataset.id = account.id;
+                
+                // 修复undefined显示问题
+                const wechatDisplay = account.wechatId ? account.wechatId : '未填写';
+                const timeDisplay = account.timeStr ? account.timeStr : '时间未记录';
+                const dateDisplay = account.dateStr ? account.dateStr : '';
+                const dayNumberDisplay = account.dayNumber ? account.dayNumber : '';
+                const orderNumberDisplay = account.orderNumber ? account.orderNumber : '';
+                
+                // 计算未出租天数
+                const daysNotRented = account.lastRentedDate ? 
+                    Math.floor((new Date() - new Date(account.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+                
+                // 卡片内容
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-date">${dateDisplay} ${dayNumberDisplay}</span>
+                        <span class="card-id">${orderNumberDisplay}</span>
+                        <span class="card-status status-inventory">库存</span>
+                        ${account.lastRentedDate ? 
+                            `<span class="days-not-rented">${Math.floor(daysNotRented)}天未租</span>` : ''}
+                    </div>
+                    <div class="card-content">
+                        <div class="card-left">
+                            <div>
+                                <div class="card-detail"><strong>纯币:</strong> ${account.pureCoins || 0}W</div>
+                                <div class="card-detail"><strong>体力:</strong> ${account.staminaLevel || 0}</div>
+                                <div class="card-detail"><strong>保险:</strong> ${account.insuranceSlots || 0}</div>
+                                <div class="card-detail"><strong>刀皮:</strong> ${account.hasPaidKnifeSkin || '无'}</div>
+                                <div class="card-detail"><strong>微信:</strong> <span class="wechat-link">${wechatDisplay}</span></div>
+                            </div>
+                            <div class="card-detail"><small>${timeDisplay}</small></div>
+                        </div>
+                        <div class="card-right">
+                            <div class="card-detail"><strong>AWM子弹:</strong> ${account.awmAmmo || 0}</div>
+                            <div class="card-detail"><strong>7.62*51:</strong> ${account.ammo76251 || 0}</div>
+                            <div class="card-detail"><strong>7.62*54:</strong> ${account.ammo76254 || 0}</div>
+                            <div class="card-detail"><strong>6.8子弹:</strong> ${account.ammo68 || 0}</div>
+                            <div class="card-detail"><strong>6头:</strong> ${account.fullDurabilityHelmet || 0}</div>
+                            <div class="card-detail"><strong>6甲:</strong> ${account.fullDurabilityArmor || 0}</div>
+                        </div>
+                    </div>
+                    <button class="edit-btn">编辑</button>
+                    <button class="delete-btn">删除</button>
+                `;
+                
+                // 点击卡片打开编辑模态框
+                const editBtn = card.querySelector('.edit-btn');
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(account.id);
+                });
+                
+                // 点击删除按钮
+                const deleteBtn = card.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    accountToDelete = account.id;
+                    document.getElementById('confirmDialog').classList.add('active');
+                });
+                
+                cardsContainer.appendChild(card);
+            });
+        }
+        
+        // 渲染出租系统卡片 - 修改后的样式
+        function renderRentalCards() {
+            const inventoryContainer = document.getElementById('inventoryCards');
+            const rentedContainer = document.getElementById('rentedCards');
+            inventoryContainer.innerHTML = '';
+            rentedContainer.innerHTML = '';
+            
+            const searchTerm = document.getElementById('searchRentalInput').value.toLowerCase();
+            const statusFilter = document.getElementById('rentalStatusFilter').value;
+            
+            // 获取库存账号
+            let inventoryAccounts = accounts.filter(account => 
+                account.status === 'inventory' &&
+                (statusFilter === 'all' || statusFilter === 'inventory') &&
+                (searchTerm === '' || 
+                 (account.pureCoins && account.pureCoins.toString().toLowerCase().includes(searchTerm)) ||
+                 (account.wechatId && account.wechatId.toLowerCase().includes(searchTerm)) ||
+                 (account.dateStr && account.dateStr.toLowerCase().includes(searchTerm)) ||
+                 (account.dayNumber && account.dayNumber.toLowerCase().includes(searchTerm)) ||
+                 (account.orderNumber && account.orderNumber.toLowerCase().includes(searchTerm)))
+            );
+            
+            // 获取出租中账号
+            let rentedAccounts = accounts.filter(account => 
+                account.status === 'rented' &&
+                (statusFilter === 'all' || statusFilter === 'rented') &&
+                (searchTerm === '' || 
+                 (account.pureCoins && account.pureCoins.toString().toLowerCase().includes(searchTerm)) ||
+                 (account.wechatId && account.wechatId.toLowerCase().includes(searchTerm)) ||
+                 (account.dateStr && account.dateStr.toLowerCase().includes(searchTerm)) ||
+                 (account.dayNumber && account.dayNumber.toLowerCase().includes(searchTerm)) ||
+                 (account.orderNumber && account.orderNumber.toLowerCase().includes(searchTerm)))
+            );
+            
+            // 应用排序
+            rentedAccounts = sortAccounts(rentedAccounts);
+            
+            // 渲染库存账号
+            if (inventoryAccounts.length === 0) {
+                if (statusFilter === 'inventory' || statusFilter === 'all') {
+                    inventoryContainer.innerHTML = '<p style="text-align: center; width: 100%;">暂无库存账号</p>';
+                }
+            } else {
+                inventoryAccounts.forEach(account => {
+                    const card = createInventoryCard(account);
+                    inventoryContainer.appendChild(card);
+                });
+            }
+            
+            // 渲染出租中订单
+            if (rentedAccounts.length === 0) {
+                if (statusFilter === 'rented' || statusFilter === 'all') {
+                    rentedContainer.innerHTML = '<p style="text-align: center; width: 100%;">暂无出租订单</p>';
+                }
+            } else {
+                rentedAccounts.forEach(account => {
+                    const card = createRentedCard(account);
+                    rentedContainer.appendChild(card);
+                });
+            }
+        }
+        
+        // 创建库存账号卡片
+        function createInventoryCard(account) {
+            const card = document.createElement('div');
+            card.className = 'order-card-new';
+            card.dataset.id = account.id;
+            
+            // 修复undefined显示问题
+            const wechatDisplay = account.wechatId ? account.wechatId : '未填写';
+            const timeDisplay = account.timeStr ? account.timeStr : '时间未记录';
+            const dateDisplay = account.dateStr ? account.dateStr : '';
+            const dayNumberDisplay = account.dayNumber ? account.dayNumber : '';
+            const orderNumberDisplay = account.orderNumber ? account.orderNumber : '';
+            const untouchableItemsDisplay = account.untouchableItems ? account.untouchableItems : '无';
+            const ownerNotesDisplay = account.ownerNotes ? account.ownerNotes : '无';
+            
+            // 计算未出租天数
+            const daysNotRented = account.lastRentedDate ? 
+                Math.floor((new Date() - new Date(account.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+            
+            card.innerHTML = `
+                <div class="order-header-new">
+                    <div>${dateDisplay} ${dayNumberDisplay} ${orderNumberDisplay}</div>
+                </div>
+                
+                <div class="remark-section-new">
+                    <button class="remark-btn-new">备注</button>
+                    <div>备注: ${ownerNotesDisplay}</div>
+                </div>
+                
+                <div class="card-content-new">
+                    <div class="left-section-new">
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">纯币:</span>${account.pureCoins || 0}W</div>
+                            <div class="info-item-new"><span class="info-label-new">等级:</span>${account.accountLevel || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">体力:</span>${account.staminaLevel || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">保险:</span>${account.insuranceSlots || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">刀皮:</span>${account.hasPaidKnifeSkin || '无'}</div>
+                            <div class="info-item-new"><span class="info-label-new">微信:</span>${wechatDisplay}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">仓库不可动:</span>${untouchableItemsDisplay}</div>
+                        </div>
+                        
+                        <div class="divider-new"></div>
+                        
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">AWM子弹:</span>${account.awmAmmo || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">7.62*51:</span>${account.ammo76251 || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">7.62*54:</span>${account.ammo76254 || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">6.8子弹:</span>${account.ammo68 || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">6头:</span>${account.fullDurabilityHelmet || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">6甲:</span>${account.fullDurabilityArmor || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="right-section-new">
+                        <div><span class="info-label-new">老板微信:</span> <span class="boss-wechat-new">未出租</span></div>
+                    </div>
+                </div>
+                
+                <div class="status-bar-new">
+                    <div class="status-new">库存 ${account.lastRentedDate ? Math.floor(daysNotRented) + '天未租' : ''}</div>
+                    <div class="time-new">${timeDisplay}</div>
+                </div>
+                
+                <button class="big-action-btn btn-rent rent-btn">出租</button>
+            `;
+            
+            // 备注按钮点击事件
+            const remarkBtn = card.querySelector('.remark-btn-new');
+            if (remarkBtn) {
+                remarkBtn.addEventListener('click', function() {
+                    const currentRemark = card.querySelector('.remark-section-new div').textContent.replace('备注:', '').trim();
+                    const newRemark = prompt('请输入备注内容:', currentRemark);
+                    if (newRemark !== null) {
+                        card.querySelector('.remark-section-new div').textContent = '备注: ' + newRemark;
+                        // 更新数据
+                        const accountIndex = accounts.findIndex(acc => acc.id == account.id);
+                        if (accountIndex !== -1) {
+                            accounts[accountIndex].ownerNotes = newRemark;
+                            localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+                        }
+                    }
+                });
+            }
+            
+            // 点击出租按钮
+            const rentBtn = card.querySelector('.rent-btn');
+            if (rentBtn) {
+                rentBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    accountToRent = account.id;
+                    document.getElementById('bossWechatId').value = '';
+                    document.getElementById('baseCost').value = '';
+                    document.getElementById('basePrice').value = '';
+                    document.getElementById('estimatedProfit').textContent = '0';
+                    document.getElementById('rentModal').classList.add('active');
+                });
+            }
+            
+            return card;
+        }
+        
+        // 创建出租中订单卡片
+        function createRentedCard(account) {
+            const card = document.createElement('div');
+            card.className = 'order-card-new';
+            card.dataset.id = account.id;
+            
+            // 修复undefined显示问题
+            const wechatDisplay = account.wechatId ? account.wechatId : '未填写';
+            const bossWechatDisplay = account.bossWechatId ? account.bossWechatId : '未填写';
+            const timeDisplay = account.timeStr ? account.timeStr : '时间未记录';
+            const dateDisplay = account.dateStr ? account.dateStr : '';
+            const dayNumberDisplay = account.dayNumber ? account.dayNumber : '';
+            const orderNumberDisplay = account.orderNumber ? account.orderNumber : '';
+            const untouchableItemsDisplay = account.untouchableItems ? account.untouchableItems : '无';
+            const ownerNotesDisplay = account.ownerNotes ? account.ownerNotes : '无';
+            
+            // 计算未出租天数
+            const daysNotRented = account.lastRentedDate ? 
+                Math.floor((new Date() - new Date(account.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+            
+            // 计算利润
+            const profit = (account.basePrice + account.extraPrice) - (account.baseCost + account.extraCost);
+            
+            card.innerHTML = `
+                <div class="order-header-new">
+                    <div>${dateDisplay} ${dayNumberDisplay} ${orderNumberDisplay}</div>
+                </div>
+                
+                <div class="remark-section-new">
+                    <button class="remark-btn-new">备注</button>
+                    <div>备注: ${ownerNotesDisplay}</div>
+                </div>
+                
+                <div class="card-content-new">
+                    <div class="left-section-new">
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">纯币:</span>${account.pureCoins || 0}W</div>
+                            <div class="info-item-new"><span class="info-label-new">等级:</span>${account.accountLevel || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">体力:</span>${account.staminaLevel || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">保险:</span>${account.insuranceSlots || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">刀皮:</span>${account.hasPaidKnifeSkin || '无'}</div>
+                            <div class="info-item-new"><span class="info-label-new">微信:</span>${wechatDisplay}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">仓库不可动:</span>${untouchableItemsDisplay}</div>
+                        </div>
+                        
+                        <div class="divider-new"></div>
+                        
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">AWM子弹:</span>${account.awmAmmo || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">7.62*51:</span>${account.ammo76251 || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">7.62*54:</span>${account.ammo76254 || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">6.8子弹:</span>${account.ammo68 || 0}</div>
+                        </div>
+                        <div class="info-row-new">
+                            <div class="info-item-new"><span class="info-label-new">6头:</span>${account.fullDurabilityHelmet || 0}</div>
+                            <div class="info-item-new"><span class="info-label-new">6甲:</span>${account.fullDurabilityArmor || 0}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="right-section-new">
+                        <div><span class="info-label-new">老板微信:</span> <span class="boss-wechat-new">${bossWechatDisplay}</span></div>
+                        <div class="divider-new"></div>
+                        <div><span class="info-label-new">基础成本:</span> ${account.baseCost || 0}</div>
+                        <div><span class="info-label-new">基础售价:</span> ${account.basePrice || 0}</div>
+                        <div><span class="info-label-new">增值成本:</span> ${account.extraCost || 0}</div>
+                        <div><span class="info-label-new">增值售价:</span> ${account.extraPrice || 0}</div>
+                        <div><span class="info-label-new">利润:</span> ${profit}</div>
+                    </div>
+                </div>
+                
+                <div class="status-bar-new">
+                    <div class="status-new">出租中 ${Math.floor(daysNotRented)}天未结</div>
+                    <div class="time-new">${timeDisplay}</div>
+                </div>
+                
+                <button class="big-action-btn btn-complete complete-btn">结单</button>
+            `;
+            
+            // 备注按钮点击事件
+            const remarkBtn = card.querySelector('.remark-btn-new');
+            if (remarkBtn) {
+                remarkBtn.addEventListener('click', function() {
+                    const currentRemark = card.querySelector('.remark-section-new div').textContent.replace('备注:', '').trim();
+                    const newRemark = prompt('请输入备注内容:', currentRemark);
+                    if (newRemark !== null) {
+                        card.querySelector('.remark-section-new div').textContent = '备注: ' + newRemark;
+                        // 更新数据
+                        const accountIndex = accounts.findIndex(acc => acc.id == account.id);
+                        if (accountIndex !== -1) {
+                            accounts[accountIndex].ownerNotes = newRemark;
+                            localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+                        }
+                    }
+                });
+            }
+            
+            // 点击结单按钮
+            const completeBtn = card.querySelector('.complete-btn');
+            if (completeBtn) {
+                completeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    accountToRent = account.id;
+                    document.getElementById('extraCost').value = account.extraCost || 0;
+                    document.getElementById('extraPrice').value = account.extraPrice || 0;
+                    calculateTotalProfit();
+                    document.getElementById('completeDialog').classList.add('active');
+                });
+            }
+            
+            return card;
+        }
+        
+        // 排序账号
+        function sortAccounts(accounts) {
+            switch(currentSort) {
+                case 'days-asc':
+                    return [...accounts].sort((a, b) => {
+                        const daysA = a.lastRentedDate ? Math.floor((new Date() - new Date(a.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+                        const daysB = b.lastRentedDate ? Math.floor((new Date() - new Date(b.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+                        return daysA - daysB;
+                    });
+                case 'days-desc':
+                    return [...accounts].sort((a, b) => {
+                        const daysA = a.lastRentedDate ? Math.floor((new Date() - new Date(a.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+                        const daysB = b.lastRentedDate ? Math.floor((new Date() - new Date(b.lastRentedDate)) / (1000 * 60 * 60 * 24)) : 0;
+                        return daysB - daysA;
+                    });
+                default:
+                    return [...accounts].sort((a, b) => b.id - a.id); // 默认按ID降序(最新在前)
+            }
+        }
+        
+        // 渲染历史订单卡片 - 只显示已结单的订单
+        function renderHistoryCards() {
+            const cardsContainer = document.getElementById('historyCards');
+            cardsContainer.innerHTML = '';
+            
+            const searchTerm = document.getElementById('searchHistoryInput').value.toLowerCase();
+            
+            const filteredAccounts = accounts.filter(account => 
+                account.status === 'completed' &&
+                (searchTerm === '' || 
+                 (account.pureCoins && account.pureCoins.toString().toLowerCase().includes(searchTerm)) ||
+                 (account.wechatId && account.wechatId.toLowerCase().includes(searchTerm)) ||
+                 (account.dateStr && account.dateStr.toLowerCase().includes(searchTerm)) ||
+                 (account.dayNumber && account.dayNumber.toLowerCase().includes(searchTerm)) ||
+                 (account.orderNumber && account.orderNumber.toLowerCase().includes(searchTerm)))
+            );
+            
+            if (filteredAccounts.length === 0) {
+                cardsContainer.innerHTML = '<p style="text-align: center; width: 100%;">暂无历史订单</p>';
+                return;
+            }
+            
+            filteredAccounts.forEach(account => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                card.dataset.id = account.id;
+                
+                // 修复undefined显示问题
+                const wechatDisplay = account.wechatId ? account.wechatId : '未填写';
+                const bossWechatDisplay = account.bossWechatId ? account.bossWechatId : '未填写';
+                const timeDisplay = account.timeStr ? account.timeStr : '时间未记录';
+                const dateDisplay = account.dateStr ? account.dateStr : '';
+                const dayNumberDisplay = account.dayNumber ? account.dayNumber : '';
+                const orderNumberDisplay = account.orderNumber ? account.orderNumber : '';
+                const untouchableItemsDisplay = account.untouchableItems ? account.untouchableItems : '无';
+                const ownerNotesDisplay = account.ownerNotes ? account.ownerNotes : '无';
+                
+                // 计算利润
+                const profit = (account.basePrice + account.extraPrice) - (account.baseCost + account.extraCost);
+                
+                card.innerHTML = `
+                    <div class="history-header">
+                        <span class="card-date">${dateDisplay} ${dayNumberDisplay} ${orderNumberDisplay}</span>
+                        <span class="history-status">已结单</span>
+                        <button class="edit-history-btn">编辑</button>
+                    </div>
+                    <div class="history-content">
+                        <div class="history-left">
+                            <div class="card-detail"><strong>纯币:</strong> ${account.pureCoins || 0}W</div>
+                            <div class="card-detail"><strong>等级:</strong> ${account.accountLevel || 0}</div>
+                            <div class="card-detail"><strong>体力:</strong> ${account.staminaLevel || 0}</div>
+                            <div class="card-detail"><strong>保险:</strong> ${account.insuranceSlots || 0}</div>
+                            <div class="card-detail"><strong>刀皮:</strong> ${account.hasPaidKnifeSkin || '无'}</div>
+                            <div class="card-detail"><strong>微信:</strong> <span class="wechat-link">${wechatDisplay}</span></div>
+                            <div class="card-detail"><strong>仓库不可动:</strong> ${untouchableItemsDisplay}</div>
+                            <div class="card-detail"><strong>备注:</strong> ${ownerNotesDisplay}</div>
+                            <div class="card-detail"><small>${timeDisplay}</small></div>
+                        </div>
+                        <div class="history-right">
+                            <div class="card-detail"><strong>老板微信:</strong> <span class="wechat-link">${bossWechatDisplay}</span></div>
+                            <div class="card-detail"><strong>AWM子弹:</strong> ${account.awmAmmo || 0}</div>
+                            <div class="card-detail"><strong>7.62*51:</strong> ${account.ammo76251 || 0}</div>
+                            <div class="card-detail"><strong>7.62*54:</strong> ${account.ammo76254 || 0}</div>
+                            <div class="card-detail"><strong>6.8子弹:</strong> ${account.ammo68 || 0}</div>
+                            <div class="card-detail"><strong>6头:</strong> ${account.fullDurabilityHelmet || 0}</div>
+                            <div class="card-detail"><strong>6甲:</strong> ${account.fullDurabilityArmor || 0}</div>
+                            <div class="profit-section">
+                                <div class="card-detail"><strong>基础成本:</strong> ${account.baseCost || 0}</div>
+                                <div class="card-detail"><strong>基础售价:</strong> ${account.basePrice || 0}</div>
+                                <div class="card-detail"><strong>增值成本:</strong> ${account.extraCost || 0}</div>
+                                <div class="card-detail"><strong>增值售价:</strong> ${account.extraPrice || 0}</div>
+                                <div class="card-detail"><strong>总利润:</strong> ${profit}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 点击编辑按钮
+                const editBtn = card.querySelector('.edit-history-btn');
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openEditModal(account.id);
+                });
+                
+                cardsContainer.appendChild(card);
+            });
+        }
+        
+        // 渲染利润报表
+        function renderProfitReport() {
+            const cardsContainer = document.getElementById('profitCards');
+            const totalProfitSum = document.getElementById('totalProfitSum');
+            const totalOrders = document.getElementById('totalOrders');
+            const averageProfit = document.getElementById('averageProfit');
+            
+            cardsContainer.innerHTML = '';
+            
+            // 只显示已完成订单
+            const completedAccounts = accounts.filter(account => account.status === 'completed');
+            
+            if (completedAccounts.length === 0) {
+                cardsContainer.innerHTML = '<p style="text-align: center; width: 100%;">暂无利润数据</p>';
+                totalProfitSum.textContent = '0';
+                totalOrders.textContent = '0';
+                averageProfit.textContent = '0';
+                return;
+            }
+            
+            // 计算总利润和平均利润
+            let totalProfit = 0;
+            completedAccounts.forEach(account => {
+                const profit = (account.basePrice + account.extraPrice) - (account.baseCost + account.extraCost);
+                totalProfit += profit;
+            });
+            
+            const avgProfit = totalProfit / completedAccounts.length;
+            
+            totalProfitSum.textContent = totalProfit.toFixed(2);
+            totalOrders.textContent = completedAccounts.length;
+            averageProfit.textContent = avgProfit.toFixed(2);
+            
+            // 渲染利润明细卡片
+            completedAccounts.forEach(account => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                card.dataset.id = account.id;
+                
+                // 修复undefined显示问题
+                const wechatDisplay = account.wechatId ? account.wechatId : '未填写';
+                const bossWechatDisplay = account.bossWechatId ? account.bossWechatId : '未填写';
+                const timeDisplay = account.timeStr ? account.timeStr : '时间未记录';
+                const dateDisplay = account.dateStr ? account.dateStr : '';
+                const dayNumberDisplay = account.dayNumber ? account.dayNumber : '';
+                const orderNumberDisplay = account.orderNumber ? account.orderNumber : '';
+                const untouchableItemsDisplay = account.untouchableItems ? account.untouchableItems : '无';
+                const ownerNotesDisplay = account.ownerNotes ? account.ownerNotes : '无';
+                
+                // 计算利润
+                const profit = (account.basePrice + account.extraPrice) - (account.baseCost + account.extraCost);
+                
+                card.innerHTML = `
+                    <div class="history-header">
+                        <span class="card-date">${dateDisplay} ${dayNumberDisplay} ${orderNumberDisplay}</span>
+                        <span class="history-status">已结单</span>
+                    </div>
+                    <div class="history-content">
+                        <div class="history-left">
+                            <div class="card-detail"><strong>纯币:</strong> ${account.pureCoins || 0}W</div>
+                            <div class="card-detail"><strong>等级:</strong> ${account.accountLevel || 0}</div>
+                            <div class="card-detail"><strong>体力:</strong> ${account.staminaLevel || 0}</div>
+                            <div class="card-detail"><strong>保险:</strong> ${account.insuranceSlots || 0}</div>
+                            <div class="card-detail"><strong>刀皮:</strong> ${account.hasPaidKnifeSkin || '无'}</div>
+                            <div class="card-detail"><strong>微信:</strong> <span class="wechat-link">${wechatDisplay}</span></div>
+                            <div class="card-detail"><strong>仓库不可动:</strong> ${untouchableItemsDisplay}</div>
+                            <div class="card-detail"><strong>备注:</strong> ${ownerNotesDisplay}</div>
+                            <div class="card-detail"><small>${timeDisplay}</small></div>
+                        </div>
+                        <div class="history-right">
+                            <div class="card-detail"><strong>老板微信:</strong> <span class="wechat-link">${bossWechatDisplay}</span></div>
+                            <div class="profit-section">
+                                <div class="card-detail"><strong>基础成本:</strong> ${account.baseCost || 0}</div>
+                                <div class="card-detail"><strong>基础售价:</strong> ${account.basePrice || 0}</div>
+                                <div class="card-detail"><strong>增值成本:</strong> ${account.extraCost || 0}</div>
+                                <div class="card-detail"><strong>增值售价:</strong> ${account.extraPrice || 0}</div>
+                                <div class="card-detail"><strong>利润:</strong> ${profit}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                cardsContainer.appendChild(card);
+            });
+        }
+        
+        // 改变账号状态
+        function changeAccountStatus(id, status) {
+            const accountIndex = accounts.findIndex(acc => acc.id == id);
+            if (accountIndex === -1) return;
+            
+            // 确保状态只能是三种之一
+            if (!['inventory', 'rented', 'completed'].includes(status)) return;
+            
+            accounts[accountIndex].status = status;
+            
+            // 如果是出租状态，更新最后出租日期
+            if (status === 'rented') {
+                accounts[accountIndex].lastRentedDate = new Date().toLocaleString();
+            }
+            
+            // 如果是结单状态，清空老板微信号
+            if (status === 'completed') {
+                accounts[accountIndex].bossWechatId = null;
+            }
+            
+            // 保存到本地存储
+            localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+            
+            // 重新渲染卡片
+            renderAccountCards();
+            renderRentalCards();
+            renderHistoryCards();
+            renderProfitReport();
+        }
+        
+        // 当前编辑的账号ID
+        let currentEditId = null;
+        
+        // 打开编辑模态框
+        function openEditModal(id) {
+            currentEditId = id;
+            const account = accounts.find(acc => acc.id == id);
+            if (!account) return;
+            
+            // 填充表单数据
+            document.getElementById('editPureCoins').value = account.pureCoins;
+            document.getElementById('editStaminaLevel').value = account.staminaLevel;
+            document.getElementById('editInsuranceSlots').value = account.insuranceSlots;
+            document.getElementById('editAccountLevel').value = account.accountLevel;
+            document.getElementById('editAwmAmmo').value = account.awmAmmo;
+            document.getElementById('editAmmo76251').value = account.ammo76251;
+            document.getElementById('editAmmo76254').value = account.ammo76254;
+            document.getElementById('editAmmo68').value = account.ammo68;
+            document.getElementById('editFullDurabilityHelmet').value = account.fullDurabilityHelmet;
+            document.getElementById('editFullDurabilityArmor').value = account.fullDurabilityArmor;
+            document.getElementById('editAcceptAccountInfo').value = account.acceptAccountInfo;
+            document.getElementById('editHasPaidKnifeSkin').value = account.hasPaidKnifeSkin;
+            document.getElementById('editUntouchableItems').value = account.untouchableItems;
+            document.getElementById('editOwnerNotes').value = account.ownerNotes;
+            document.getElementById('editWechatId').value = account.wechatId;
+            document.getElementById('editBaseCost').value = account.baseCost || 0;
+            document.getElementById('editBasePrice').value = account.basePrice || 0;
+            document.getElementById('editExtraCost').value = account.extraCost || 0;
+            document.getElementById('editExtraPrice').value = account.extraPrice || 0;
+            
+            // 计算并显示总利润
+            const totalProfit = (account.basePrice + account.extraPrice) - (account.baseCost + account.extraCost);
+            document.getElementById('editTotalProfit').textContent = totalProfit;
+            
+            // 显示模态框
+            document.getElementById('editModal').classList.add('active');
+        }
+        
+        // 关闭编辑模态框
+        document.getElementById('editClose').addEventListener('click', () => {
+            document.getElementById('editModal').classList.remove('active');
+        });
+        
+        // 编辑表单提交
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const accountIndex = accounts.findIndex(acc => acc.id == currentEditId);
+            if (accountIndex === -1) return;
+            
+            // 更新账号数据
+            accounts[accountIndex].pureCoins = document.getElementById('editPureCoins').value;
+            accounts[accountIndex].staminaLevel = document.getElementById('editStaminaLevel').value;
+            accounts[accountIndex].insuranceSlots = document.getElementById('editInsuranceSlots').value;
+            accounts[accountIndex].accountLevel = document.getElementById('editAccountLevel').value;
+            accounts[accountIndex].awmAmmo = document.getElementById('editAwmAmmo').value;
+            accounts[accountIndex].ammo76251 = document.getElementById('editAmmo76251').value;
+            accounts[accountIndex].ammo76254 = document.getElementById('editAmmo76254').value;
+            accounts[accountIndex].ammo68 = document.getElementById('editAmmo68').value;
+            accounts[accountIndex].fullDurabilityHelmet = document.getElementById('editFullDurabilityHelmet').value;
+            accounts[accountIndex].fullDurabilityArmor = document.getElementById('editFullDurabilityArmor').value;
+            accounts[accountIndex].acceptAccountInfo = document.getElementById('editAcceptAccountInfo').value;
+            accounts[accountIndex].hasPaidKnifeSkin = document.getElementById('editHasPaidKnifeSkin').value;
+            accounts[accountIndex].untouchableItems = document.getElementById('editUntouchableItems').value;
+            accounts[accountIndex].ownerNotes = document.getElementById('editOwnerNotes').value;
+            accounts[accountIndex].wechatId = document.getElementById('editWechatId').value;
+            accounts[accountIndex].baseCost = parseFloat(document.getElementById('editBaseCost').value) || 0;
+            accounts[accountIndex].basePrice = parseFloat(document.getElementById('editBasePrice').value) || 0;
+            accounts[accountIndex].extraCost = parseFloat(document.getElementById('editExtraCost').value) || 0;
+            accounts[accountIndex].extraPrice = parseFloat(document.getElementById('editExtraPrice').value) || 0;
+            
+            // 保存到本地存储
+            localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+            
+            // 重新渲染卡片
+            renderAccountCards();
+            renderRentalCards();
+            renderHistoryCards();
+            renderProfitReport();
+            
+            // 关闭模态框
+            document.getElementById('editModal').classList.remove('active');
+            
+            alert('修改已保存！');
+        });
+        
+        // 点击模态框外部关闭
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+        
+        // 出租表单提交
+        document.getElementById('rentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const bossWechatId = document.getElementById('bossWechatId').value;
+            if (!bossWechatId || bossWechatId.trim() === '') {
+                alert('请输入老板微信号');
+                return;
+            }
+            
+            const accountIndex = accounts.findIndex(acc => acc.id == accountToRent);
+            if (accountIndex === -1) return;
+            
+            // 更新账号数据
+            accounts[accountIndex].status = 'rented';
+            accounts[accountIndex].bossWechatId = bossWechatId;
+            accounts[accountIndex].lastRentedDate = new Date().toLocaleString();
+            accounts[accountIndex].baseCost = parseFloat(document.getElementById('baseCost').value) || 0;
+            accounts[accountIndex].basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+            
+            // 保存到本地存储
+            localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+            
+            // 重新渲染卡片
+            renderAccountCards();
+            renderRentalCards();
+            renderHistoryCards();
+            renderProfitReport();
+            
+            // 关闭模态框
+            document.getElementById('rentModal').classList.remove('active');
+            document.getElementById('bossWechatId').value = '';
+            document.getElementById('baseCost').value = '';
+            document.getElementById('basePrice').value = '';
+            document.getElementById('estimatedProfit').textContent = '0';
+            
+            alert('账号已出租！');
+        });
+        
+        // 关闭出租模态框
+        document.getElementById('rentClose').addEventListener('click', () => {
+            document.getElementById('rentModal').classList.remove('active');
+            document.getElementById('bossWechatId').value = '';
+            document.getElementById('baseCost').value = '';
+            document.getElementById('basePrice').value = '';
+            document.getElementById('estimatedProfit').textContent = '0';
+        });
+        
+        // 点击出租模态框外部关闭
+        document.getElementById('rentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.getElementById('bossWechatId').value = '';
+                document.getElementById('baseCost').value = '';
+                document.getElementById('basePrice').value = '';
+                document.getElementById('estimatedProfit').textContent = '0';
+            }
+        });
+        
+        // 确认删除
+        document.getElementById('confirmYes').addEventListener('click', function() {
+            if (accountToDelete) {
+                accounts = accounts.filter(acc => acc.id != accountToDelete);
+                localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+                renderAccountCards();
+                renderRentalCards();
+                renderHistoryCards();
+                renderProfitReport();
+                accountToDelete = null;
+            }
+            document.getElementById('confirmDialog').classList.remove('active');
+        });
+        
+        document.getElementById('confirmNo').addEventListener('click', function() {
+            accountToDelete = null;
+            document.getElementById('confirmDialog').classList.remove('active');
+        });
+        
+        // 结单确认
+        document.getElementById('completeYes').addEventListener('click', function() {
+            const accountIndex = accounts.findIndex(acc => acc.id == accountToRent);
+            if (accountIndex !== -1) {
+                accounts[accountIndex].status = 'completed';
+                accounts[accountIndex].extraCost = parseFloat(document.getElementById('extraCost').value) || 0;
+                accounts[accountIndex].extraPrice = parseFloat(document.getElementById('extraPrice').value) || 0;
+                
+                // 保存到本地存储
+                localStorage.setItem('deltaAccounts', JSON.stringify(accounts));
+                
+                // 重新渲染卡片
+                renderAccountCards();
+                renderRentalCards();
+                renderHistoryCards();
+                renderProfitReport();
+            }
+            document.getElementById('completeDialog').classList.remove('active');
+        });
+        
+        document.getElementById('completeNo').addEventListener('click', function() {
+            document.getElementById('completeDialog').classList.remove('active');
+        });
+        
+        // 输入限制 - 只能输入数字
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9.]/g, '');
+            });
+        });
+    </script>
+</body>
+</html>
